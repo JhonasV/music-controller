@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Button, Grid, Typography } from "@material-ui/core";
+import CreateRoomPage from "./CreateRoomPage";
 
-export default function Room({ match }) {
+export default function Room({ match, history, leaveRoomCallback }) {
   const [room, setRoom] = useState({
     code: "",
-    votes_to_skip: 2,
-    guest_can_pause: false,
-    is_host: false,
+    votesToSkip: 2,
+    guestCanPause: false,
+    isHost: false,
   });
+  const [showSettings, setShowSettings] = useState(false);
 
   const fetchRoom = async () => {
     const { roomCode } = match.params;
@@ -14,24 +18,113 @@ export default function Room({ match }) {
     const response = await fetch(`/api/get-room?code=${roomCode}`);
     const result = await response.json();
 
-    if (response.status == 400) {
-    } else if (response.status == 404) {
+    if (response.ok) {
+      setRoom({
+        code: result.code,
+        votesToSkip: result.votes_to_skip,
+        guestCanPause: result.guest_can_pause,
+        isHost: result.is_host,
+      });
     } else {
-      console.log(result);
-      setRoom(result);
+      leaveRoomCallback();
+      history.push("/join");
     }
+  };
+
+  const leaveButtonPressed = async () => {
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+    };
+
+    const response = await fetch("/api/leave-room", requestOptions);
+
+    if (response.ok) {
+      history.push("/");
+    }
+  };
+
+  const renderSettings = () => {
+    return (
+      <Grid container spacing={1}>
+        <Grid item xs={12} align="center">
+          <CreateRoomPage
+            update={true}
+            updateRoom={room}
+            updateCallback={() => {}}
+          />
+        </Grid>
+        <Grid item xs={12} align="center">
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => setShowSettings(false)}
+          >
+            Close
+          </Button>
+        </Grid>
+      </Grid>
+    );
+  };
+
+  const renderSettingsButton = () => {
+    return (
+      <Grid item xs={12} align="center">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setShowSettings(true)}
+        >
+          Settings
+        </Button>
+      </Grid>
+    );
   };
 
   useEffect(() => {
     (async () => await fetchRoom())();
   }, []);
 
+  if (showSettings) {
+    return renderSettings();
+  }
+
   return (
-    <div>
-      <h3>{room.code}</h3>
-      <p>Votes: {room.votes_to_skip}</p>
-      <p>Guest Can Pause: {room.guest_can_pause.toString()}</p>
-      <p>Host: {room.is_host.toString()}</p>
-    </div>
+    <Grid container spacing={1}>
+      <Grid item xs={12} align="center">
+        <Typography variant="h4" component="h4">
+          Code: {room.code}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} align="center">
+        <Typography variant="h6" component="h6">
+          Votes: {room.votesToSkip}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} align="center">
+        <Typography variant="h6" component="h6">
+          Guest Can Pause: {room.guestCanPause.toString()}
+        </Typography>
+      </Grid>
+      <Grid item xs={12} align="center">
+        <Typography variant="h6" component="h6">
+          Host: {room.isHost.toString()}
+        </Typography>
+      </Grid>
+      {room.isHost ? renderSettingsButton() : null}
+      <Grid item xs={12} align="center">
+        <Button
+          variant="contained"
+          component={Link}
+          color="secondary"
+          onClick={async () => await leaveButtonPressed()}
+        >
+          Leave Room
+        </Button>
+      </Grid>
+    </Grid>
   );
 }

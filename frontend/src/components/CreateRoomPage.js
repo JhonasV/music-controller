@@ -12,11 +12,16 @@ import {
 } from "@material-ui/core";
 import { Link } from "react-router-dom";
 
-export default function CreateRoomPage({ history }) {
+export default function CreateRoomPage({
+  history,
+  update = false,
+  updateRoom,
+  updateCallback,
+}) {
   const defaultVotes = 2;
   const [room, setRoom] = useState({
-    votesToSkip: defaultVotes,
-    guestCanPause: true,
+    votesToSkip: update ? updateRoom.votesToSkip : defaultVotes,
+    guestCanPause: update ? updateRoom.guestCanPause : true,
   });
 
   const handleVotesChange = (e) => {
@@ -64,7 +69,7 @@ export default function CreateRoomPage({ history }) {
     <Grid container spacing={1}>
       <Grid item xs={12} align="center">
         <Typography component="h4" variant="h4">
-          Create A Room
+          {update ? "Update Room Settings" : "Create A Room"}
         </Typography>
       </Grid>
       <Grid item xs={12} align="center">
@@ -74,7 +79,7 @@ export default function CreateRoomPage({ history }) {
           </FormHelperText>
           <RadioGroup
             row
-            defaultValue="true"
+            defaultValue={room.guestCanPause.toString()}
             onChange={(e) => handleGuestCanPauseChange(e)}
           >
             <FormControlLabel
@@ -97,7 +102,7 @@ export default function CreateRoomPage({ history }) {
           <TextField
             required={true}
             type="number"
-            defaultValue={defaultVotes}
+            defaultValue={room.votesToSkip}
             onChange={(e) => handleVotesChange(e)}
             inputProps={{
               min: 1,
@@ -113,16 +118,21 @@ export default function CreateRoomPage({ history }) {
         <Button
           color="primary"
           variant="contained"
-          onClick={(e) => handleRoomButtonPressed(e)}
+          onClick={(e) =>
+            update ? updateCallback() : handleRoomButtonPressed(e)
+          }
         >
-          Create A Room
+          {update ? "Update Room Settings" : "Create A Room"}
         </Button>
       </Grid>
-      <Grid item xs={12} align="center">
-        <Button color="secondary" variant="contained" to="/" component={Link}>
-          Back
-        </Button>
-      </Grid>
+
+      {!update ? (
+        <Grid item xs={12} align="center">
+          <Button color="secondary" variant="contained" to="/" component={Link}>
+            Back
+          </Button>
+        </Grid>
+      ) : null}
     </Grid>
   );
 }
