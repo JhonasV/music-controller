@@ -9,7 +9,10 @@ import {
   Radio,
   RadioGroup,
   FormControlLabel,
+  Collapse,
 } from "@material-ui/core";
+
+import { Alert } from "@material-ui/lab";
 import { Link } from "react-router-dom";
 
 export default function CreateRoomPage({
@@ -23,6 +26,8 @@ export default function CreateRoomPage({
     votesToSkip: update ? updateRoom.votesToSkip : defaultVotes,
     guestCanPause: update ? updateRoom.guestCanPause : true,
   });
+
+  const [alert, setAlert] = useState({ message: "", success: false });
 
   const handleVotesChange = (e) => {
     setRoom({ ...room, votesToSkip: e.target.value });
@@ -65,8 +70,49 @@ export default function CreateRoomPage({
     }
   };
 
+  const handleUpdateButtonPressed = async () => {
+    try {
+      const payload = {
+        guest_can_pause: room.guestCanPause,
+        votes_to_skip: room.votesToSkip,
+        code: updateRoom.code,
+      };
+
+      const requestOptions = {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+
+      const response = await fetch("/api/update-room", requestOptions);
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setAlert({ message: "Successfully updated!", success: true });
+        updateCallback(result);
+      } else {
+        setAlert({ message: result.message, success: false });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <Grid container spacing={1}>
+      <Grid item xs={12} align="center">
+        <Collapse in={alert.message !== ""}>
+          <Alert
+            onClose={() => setAlert({ ...alert, message: "" })}
+            severity={alert.success ? "success" : "error"}
+          >
+            {alert.message}
+          </Alert>
+        </Collapse>
+      </Grid>
       <Grid item xs={12} align="center">
         <Typography component="h4" variant="h4">
           {update ? "Update Room Settings" : "Create A Room"}
@@ -119,7 +165,7 @@ export default function CreateRoomPage({
           color="primary"
           variant="contained"
           onClick={(e) =>
-            update ? updateCallback() : handleRoomButtonPressed(e)
+            update ? handleUpdateButtonPressed() : handleRoomButtonPressed(e)
           }
         >
           {update ? "Update Room Settings" : "Create A Room"}

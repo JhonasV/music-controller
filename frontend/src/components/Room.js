@@ -47,6 +47,14 @@ export default function Room({ match, history, leaveRoomCallback }) {
     }
   };
 
+  const updateCallback = (updatedData) => {
+    setRoom({
+      ...room,
+      guestCanPause: updatedData.guest_can_pause,
+      votesToSkip: updatedData.votes_to_skip,
+    });
+  };
+
   const renderSettings = () => {
     return (
       <Grid container spacing={1}>
@@ -54,7 +62,7 @@ export default function Room({ match, history, leaveRoomCallback }) {
           <CreateRoomPage
             update={true}
             updateRoom={room}
-            updateCallback={() => {}}
+            updateCallback={updateCallback}
           />
         </Grid>
         <Grid item xs={12} align="center">
