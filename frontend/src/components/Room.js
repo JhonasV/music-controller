@@ -11,7 +11,7 @@ export default function Room({ match, history, leaveRoomCallback }) {
     isHost: false,
   });
   const [showSettings, setShowSettings] = useState(false);
-
+  const [spotifyAuthenticated, setSpotifyAuthenticated] = useState(false);
   const fetchRoom = async () => {
     const { roomCode } = match.params;
 
@@ -25,9 +25,26 @@ export default function Room({ match, history, leaveRoomCallback }) {
         guestCanPause: result.guest_can_pause,
         isHost: result.is_host,
       });
+
+      if (result.is_host) {
+        await authenticateSpotify();
+      }
     } else {
       leaveRoomCallback();
       history.push("/join");
+    }
+  };
+
+  const authenticateSpotify = async () => {
+    const response = await fetch("/spotify/is-authenticated");
+    const data = await response.json();
+
+    setSpotifyAuthenticated(data.status);
+
+    if (!data.status) {
+      const response2 = await fetch("/spotify/get-auth-url");
+      const data2 = await response2.json();
+      window.location.replace(data2.url);
     }
   };
 
