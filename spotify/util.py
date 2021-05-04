@@ -2,7 +2,9 @@ from .models import SpotifyToken
 from django.utils import timezone
 from datetime import timedelta
 from .credentials import CLIENT_SECRET, CLIENT_ID
-from requests import post
+from requests import post, get, put
+
+BASE_URL = 'https://api.spotify.com/v1/me/'
 
 def get_user_tokens(session_id):
     user_tokens = SpotifyToken.objects.filter(user = session_id)
@@ -10,6 +12,9 @@ def get_user_tokens(session_id):
         return user_tokens[0]
     else:
         return None
+
+def remove_token(session_id):
+    SpotifyToken.objects.filteR(user == session_id).delete()
 
 
 def update_or_create_user_tokens(session_id, access_token, token_type, expires_in, refresh_token):
@@ -53,3 +58,22 @@ def refresh_spotify_token(session_id):
     refresh_token = response.get('refresh_token')
 
     update_or_create_user_tokens(session_id, access_token, token_type, expires_in, refresh_token)
+
+
+def execute_spotify_api_request(session_id, endpoint, post_=False, put_=False):
+    tokens = get_user_tokens(session_id)
+    headers = {'Content-Type': 'application/json',
+               'Authorization': "Bearer " + tokens.access_token}
+
+    url = BASE_URL + endpoint
+
+    if post_:
+        post(url, headers=headers)
+    if put_:
+        post(url, headers=headers)
+
+    response = get(url, {}, headers=headers)
+    try:
+        return response.json()
+    except:
+        return {'Error': 'Something went wrong'}

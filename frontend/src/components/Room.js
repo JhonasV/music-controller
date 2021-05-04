@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Grid, Typography } from "@material-ui/core";
 import CreateRoomPage from "./CreateRoomPage";
+import MusicPlayer from "./MusicPlayer";
 
 export default function Room({ match, history, leaveRoomCallback }) {
   const [room, setRoom] = useState({
@@ -10,6 +11,8 @@ export default function Room({ match, history, leaveRoomCallback }) {
     guestCanPause: false,
     isHost: false,
   });
+
+  const [song, setSong] = useState({});
   const [showSettings, setShowSettings] = useState(false);
   const [spotifyAuthenticated, setSpotifyAuthenticated] = useState(false);
   const fetchRoom = async () => {
@@ -33,6 +36,20 @@ export default function Room({ match, history, leaveRoomCallback }) {
       leaveRoomCallback();
       history.push("/join");
     }
+  };
+
+  const getCurrentSong = () => {
+    fetch("/spotify/current-song")
+      .then((response) => {
+        if (!response.ok) {
+          return {};
+        } else {
+          return response.json();
+        }
+      })
+      .then((data) => {
+        setSong(data);
+      });
   };
 
   const authenticateSpotify = async () => {
@@ -111,6 +128,12 @@ export default function Room({ match, history, leaveRoomCallback }) {
 
   useEffect(() => {
     (async () => await fetchRoom())();
+
+    let interval = setInterval(getCurrentSong, 1000);
+
+    return function cleanup() {
+      clearInterval(interval);
+    };
   }, []);
 
   if (showSettings) {
@@ -124,21 +147,7 @@ export default function Room({ match, history, leaveRoomCallback }) {
           Code: {room.code}
         </Typography>
       </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" component="h6">
-          Votes: {room.votesToSkip}
-        </Typography>
-      </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" component="h6">
-          Guest Can Pause: {room.guestCanPause.toString()}
-        </Typography>
-      </Grid>
-      <Grid item xs={12} align="center">
-        <Typography variant="h6" component="h6">
-          Host: {room.isHost.toString()}
-        </Typography>
-      </Grid>
+      <MusicPlayer song={song} />
       {room.isHost ? renderSettingsButton() : null}
       <Grid item xs={12} align="center">
         <Button
