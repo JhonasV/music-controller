@@ -10,6 +10,25 @@ import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import PauseIcon from "@material-ui/icons/Pause";
 import SkipNextIcon from "@material-ui/icons/SkipNext";
 const MusicPlayer = ({ song }) => {
+
+  const pauseSong = () => {
+    const requestOptions = {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'}
+    };
+
+     fetch('/spotify/pause', requestOptions)
+  }
+
+  const playSong = () => {
+    const requestOptions = {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'}
+    };
+
+     fetch('/spotify/play', requestOptions)
+  }
+
   let songProgress = (song.time / song.duration) * 100;
 
   return (
@@ -26,7 +45,7 @@ const MusicPlayer = ({ song }) => {
             {song.artist}
           </Typography>
           <div>
-            <IconButton>
+            <IconButton onClick={song.is_playing ? pauseSong : playSong}>
               {song.is_playing ? <PauseIcon /> : <PlayArrowIcon />}
             </IconButton>
             <IconButton>
